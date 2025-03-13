@@ -94,7 +94,6 @@
             <groupId>org.soot-oss</groupId>
             <artifactId>soot</artifactId>
             <version>${sootVersion}</version>
-<!--            <scope>test</scope>-->
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
