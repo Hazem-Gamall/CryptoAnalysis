@@ -9,12 +9,16 @@
  ********************************************************************************/
 package de.fraunhofer.iem.android;
 
+import com.google.common.io.Files;
 import crypto.exceptions.CryptoAnalysisParserException;
 import crypto.reporting.Reporter;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.concurrent.Callable;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(mixinStandardHelpOptions = true)
@@ -35,7 +39,7 @@ public class AndroidSettings implements Callable<Integer> {
     @CommandLine.Option(
             names = {"--rulesDir"},
             description = {
-                "The path to ruleset directory. Can be a simple directory or a ZIP archive"
+                    "The path to ruleset directory. Can be a simple directory or a ZIP archive"
             },
             required = true)
     private String rulesetDirectory = null;
@@ -63,6 +67,17 @@ public class AndroidSettings implements Callable<Integer> {
             description = "Visualize the errors (requires --reportPath to be set)")
     private boolean visualization = false;
 
+    @CommandLine.Option(
+            names = {"--ignoreSections"},
+            description =
+                    "Names of packages, classes and methods to be ignored during the analysis. This "
+                            + "input expects path to a file containing one name per line. For example, "
+                            + "'de.example.testClass' ignores the class 'testClass', 'de.example.exampleClass.exampleMethod "
+                            + "ignores the method 'exampleMethod' in 'exampleClass', and 'de.example.*' ignores all classes "
+                            + "and methods in the package 'example'. Using this option may increase the analysis performance. "
+                            + "Note that constructors are methods that can be specified with '<init>'.")
+    private String ignoreSectionsPath = null;
+
     public enum CallGraphAlgorithm {
         CHA,
         RTA,
@@ -71,6 +86,7 @@ public class AndroidSettings implements Callable<Integer> {
     }
 
     private CallGraphAlgorithm callGraphAlgorithm;
+    private Collection<String> ignoredSections;
     private Collection<Reporter.ReportFormat> reportFormats;
 
     public AndroidSettings() {
@@ -91,6 +107,10 @@ public class AndroidSettings implements Callable<Integer> {
             reportFormats = parseReportFormatValues(reportFormat);
         }
 
+        if (ignoreSectionsPath != null) {
+            ignoredSections = parseIgnoredSectionOption(ignoreSectionsPath);
+        }
+
         if (visualization && reportPath == null) {
             throw new CryptoAnalysisParserException(
                     "If visualization is enabled, the reportPath has to be set");
@@ -107,9 +127,8 @@ public class AndroidSettings implements Callable<Integer> {
             case "rta" -> CallGraphAlgorithm.RTA;
             case "vta" -> CallGraphAlgorithm.VTA;
             case "spark" -> CallGraphAlgorithm.SPARK;
-            default ->
-                    throw new CryptoAnalysisParserException(
-                            "Invalid call graph algorithm. Possible values are {CHA, RTA, VTA, SPARK");
+            default -> throw new CryptoAnalysisParserException(
+                    "Invalid call graph algorithm. Possible values are {CHA, RTA, VTA, SPARK");
         };
     }
 
@@ -148,6 +167,27 @@ public class AndroidSettings implements Callable<Integer> {
         }
 
         return formats;
+    }
+
+    private Collection<String> parseIgnoredSectionOption(String path)
+            throws CryptoAnalysisParserException {
+        Collection<String> result = new ArrayList<>();
+        File ignorePackageFile = new File(path);
+
+        if (ignorePackageFile.isFile() && ignorePackageFile.canRead()) {
+            try {
+                List<String> lines = Files.readLines(ignorePackageFile, Charset.defaultCharset());
+                result.addAll(lines);
+            } catch (IOException e) {
+                throw new CryptoAnalysisParserException(
+                        "Error while reading file " + ignorePackageFile + ": " + e.getMessage());
+            }
+        } else {
+            throw new CryptoAnalysisParserException(
+                    ignorePackageFile + " is not a file or cannot be read");
+        }
+
+        return result;
     }
 
     public String getApkFile() {
@@ -204,6 +244,14 @@ public class AndroidSettings implements Callable<Integer> {
 
     public void setVisualization(boolean visualization) {
         this.visualization = visualization;
+    }
+
+    public Collection<String> getIgnoredSections() {
+        return ignoredSections;
+    }
+
+    public void setIgnoredSections(Collection<String> ignoredSections) {
+        this.ignoredSections = new HashSet<>(ignoredSections);
     }
 
     @Override

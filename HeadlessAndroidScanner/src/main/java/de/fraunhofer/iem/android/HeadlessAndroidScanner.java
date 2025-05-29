@@ -16,10 +16,12 @@ import crypto.exceptions.CryptoAnalysisParserException;
 import crypto.reporting.Reporter;
 import crypto.reporting.ReporterFactory;
 import crysl.rule.CrySLRule;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +72,7 @@ public class HeadlessAndroidScanner extends CryptoScanner {
         flowDroidSetup.setupFlowDroid();
         additionalFrameworkSetup();
 
-        DataFlowScope dataFlowScope = new AndroidDataFlowScope(rules, Collections.emptySet());
+        DataFlowScope dataFlowScope = new AndroidDataFlowScope(rules, settings.getIgnoredSections());
         super.getAnalysisReporter().beforeCallGraphConstruction();
         FrameworkScope frameworkScope = flowDroidSetup.createFrameworkScope(dataFlowScope);
         super.getAnalysisReporter().afterCallGraphConstruction(frameworkScope.getCallGraph());
@@ -133,5 +135,6 @@ public class HeadlessAndroidScanner extends CryptoScanner {
         settings.setVisualization(visualization);
     }
 
-    public void additionalFrameworkSetup() {}
+    public void additionalFrameworkSetup() {
+    }
 }
