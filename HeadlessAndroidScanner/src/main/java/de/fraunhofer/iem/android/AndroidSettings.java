@@ -78,6 +78,13 @@ public class AndroidSettings implements Callable<Integer> {
                             + "Note that constructors are methods that can be specified with '<init>'.")
     private String ignoreSectionsPath = null;
 
+    @CommandLine.Option(
+            names = {"--timeout"},
+            description =
+                    "Timeout for seeds in milliseconds. If a seed exceeds this value, CryptoAnalysis aborts the "
+                            + "typestate and extract parameter analysis and continues with the results computed so far. (default: 10000)")
+    private int timeout = 10000;
+
     public enum CallGraphAlgorithm {
         CHA,
         RTA,
@@ -114,6 +121,9 @@ public class AndroidSettings implements Callable<Integer> {
         if (visualization && reportPath == null) {
             throw new CryptoAnalysisParserException(
                     "If visualization is enabled, the reportPath has to be set");
+        }
+        if (timeout < 0) {
+            throw new CryptoAnalysisParserException("Timeout should not be less than 0");
         }
 
         if (exitCode != CommandLine.ExitCode.OK) {
@@ -253,7 +263,13 @@ public class AndroidSettings implements Callable<Integer> {
     public void setIgnoredSections(Collection<String> ignoredSections) {
         this.ignoredSections = new HashSet<>(ignoredSections);
     }
+    public int getTimeout() {
+        return timeout;
+    }
 
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
     @Override
     public Integer call() throws Exception {
         return 0;

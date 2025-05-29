@@ -53,6 +53,11 @@ public class HeadlessAndroidScanner extends CryptoScanner {
         return new HeadlessAndroidScanner(androidSettings);
     }
 
+    @Override
+    public int getTimeout() {
+        return settings.getTimeout();
+    }
+
     public void scan() {
         LOGGER.info("Reading rules from {}", settings.getRulesetDirectory());
         Collection<CrySLRule> rules = super.readRules(settings.getRulesetDirectory());
