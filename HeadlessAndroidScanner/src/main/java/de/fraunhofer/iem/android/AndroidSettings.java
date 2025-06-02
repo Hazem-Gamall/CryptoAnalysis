@@ -99,6 +99,7 @@ public class AndroidSettings implements Callable<Integer> {
     public AndroidSettings() {
         callGraphAlgorithm = CallGraphAlgorithm.CHA;
         reportFormats = Set.of(Reporter.ReportFormat.CMD);
+        ignoredSections = new ArrayList<>();
     }
 
     public void parseSettingsFromCLI(String[] settings) throws CryptoAnalysisParserException {
